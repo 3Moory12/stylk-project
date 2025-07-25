@@ -1,0 +1,85 @@
+
+  return config;
+});
+
+// Add an interceptor for handling 401 Unauthorized responses
+addErrorInterceptor((error) => {
+  // If the error is a 401 Unauthorized, log the user out
+  if (error instanceof ApiError && error.status === 401) {
+    // Clear authentication token
+    localStorage.removeItem('auth_token');
+
+    // Redirect to login page
+    if (window.location.pathname !== '/login') {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+    }
+
+    // Return null to indicate the error was handled
+    return null;
+  }
+
+  // Return the error to allow other interceptors to handle it
+  return error;
+});
+
+/**
+ * Create a hook for making API calls
+ * @param {Function} apiCall - Function that makes the API call
+ * @param {Object} options - Options for the hook
+ * @returns {Array} [execute, { data, loading, error }]
+ */
+export function useApi(apiCall, options = {}) {
+  const [state, setState] = useState({
+    data: null,
+    loading: false,
+    error: null,
+  });
+
+  // Reference to track if the component is mounted
+  const isMounted = useRef(true);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Function to execute the API call
+  const execute = useCallback(
+    async (...args) => {
+      // Set loading state
+      setState(prev => ({ ...prev, loading: true, error: null }));
+
+      try {
+        // Make the API call
+        const result = await apiCall(...args);
+
+        // Update state if still mounted
+        if (isMounted.current) {
+          setState({ data: result, loading: false, error: null });
+        }
+
+        return result;
+      } catch (error) {
+        // Update state if still mounted
+        if (isMounted.current) {
+          setState({ data: null, loading: false, error });
+        }
+
+        // Handle the error if onError is provided
+        if (options.onError) {
+          options.onError(error);
+        }
+
+        // Re-throw the error if throwError is true
+        if (options.throwError) {
+          throw error;
+        }
+      }
+    },
+    [apiCall, options]
+  );
+
+  return [execute, state];
+}

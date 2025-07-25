@@ -1,0 +1,126 @@
+
+import { useState, useCallback, useEffect } from 'react';
+import { logger } from '../utils/logger';
+
+// 初始状态
+const initialState = {
+  isLoading: false,
+  error: null,
+  user: {
+    id: null,
+    name: null,
+  },
+  theme: 'light',
+};
+
+// 尝试从本地存储加载状态
+function loadFromStorage() {
+  try {
+    const stored = localStorage.getItem('app-storage');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        ...initialState,
+        user: parsed?.state?.user || initialState.user,
+        theme: parsed?.state?.theme || initialState.theme,
+      };
+    }
+  } catch (e) {
+    logger.error('Failed to load state from storage', { error: e });
+  }
+  return initialState;
+}
+
+// 保存状态到本地存储
+function saveToStorage(state) {
+  try {
+    const toStore = {
+      state: {
+        user: state.user,
+        theme: state.theme,
+      },
+    };
+    localStorage.setItem('app-storage', JSON.stringify(toStore));
+  } catch (e) {
+    logger.error('Failed to save state to storage', { error: e });
+  }
+}
+
+// 创建一个全局状态变量
+let globalState = loadFromStorage();
+let listeners = [];
+
+// 通知所有监听器状态更新
+function notify() {
+  listeners.forEach(listener => listener(globalState));
+}
+
+// 更新全局状态
+function setState(partial) {
+  const nextState = typeof partial === 'function' 
+    ? partial(globalState) 
+    : { ...globalState, ...partial };
+
+  // 记录状态变更
+  logger.debug('State updated', {
+    prev: globalState,
+    next: nextState,
+  });
+
+  globalState = nextState;
+  saveToStorage(globalState);
+  notify();
+}
+
+// React hook 用于访问和更新状态
+export function useAppStore(selector = state => state) {
+  const [state, setState] = useState(() => selector(globalState));
+
+  useEffect(() => {
+    // 添加监听器
+    const listener = (newState) => {
+      setState(selector(newState));
+    };
+
+    listeners.push(listener);
+
+    // 清理函数
+    return () => {
+      listeners = listeners.filter(l => l !== listener);
+    };
+  }, [selector]);
+
+  return state;
+}
+
+// 导出 actions
+export const actions = {
+  setLoading: (isLoading) => setState({ isLoading }),
+
+  setError: (error) => {
+    if (error) {
+      logger.error(error);
+    }
+    setState({ error });
+  },
+
+  clearError: () => setState({ error: null }),
+
+  setUser: (user) => setState({ user }),
+
+  logout: () => setState({ 
+    user: { id: null, name: null } 
+  }),
+
+  setTheme: (theme) => setState({ theme }),
+
+  toggleTheme: () => setState(state => ({ 
+    theme: state.theme === 'light' ? 'dark' : 'light' 
+  })),
+};
+
+// 导出选择器函数
+export const useIsLoading = () => useAppStore(state => state.isLoading);
+export const useError = () => useAppStore(state => state.error);
+export const useUser = () => useAppStore(state => state.user);
+export const useTheme = () => useAppStore(state => state.theme);

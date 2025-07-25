@@ -1,0 +1,29 @@
+n>
+                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              {/* Last page button */}
+              <button
+                onClick={pagination$.lastPage}
+                disabled={!pagination$.pageInfo.hasNextPage}
+                className={cn(
+                  'px-2 py-1 text-sm rounded-md',
+                  pagination$.pageInfo.hasNextPage
+                    ? 'text-gray-700 hover:bg-gray-100'
+                    : 'text-gray-400 cursor-not-allowed'
+                )}
+              >
+                <span className="sr-only">Last</span>
+                <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M4.293 15.707a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L8.586 10l-4.293 4.293a1 1 0 000 1.414zm6 0a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L14.586 10l-4.293 4.293a1 1 0 000 1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

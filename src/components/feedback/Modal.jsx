@@ -1,0 +1,305 @@
+
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { cn } from '../../utils/cn';
+
+// Modal Context
+const ModalContext = createContext({
+  openModal: () => {},
+  closeModal: () => {},
+});
+
+/**
+ * Base Modal Component
+ */
+const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
+  closeOnOverlayClick = true,
+  showCloseButton = true,
+  footer = null,
+  className,
+}) => {
+  // Handle escape key press
+  React.useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent scrolling when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      // Restore scrolling when modal is closed
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
+  // Don't render anything if the modal is closed
+  if (!isOpen) return null;
+
+  // Size classes
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-full mx-4',
+  };
+
+  // Calculate modal size
+  const modalSize = sizeClasses[size] || sizeClasses.md;
+
+  // Create a portal for the modal
+  return createPortal(
+    <div className="fixed z-50 inset-0 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        {/* Overlay */}
+        <div
+          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          aria-hidden="true"
+          onClick={closeOnOverlayClick ? onClose : undefined}
+        />
+
+        {/* Modal positioning */}
+        <span
+          className="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
+        >
+          &#8203;
+        </span>
+
+        {/* Modal panel */}
+        <div
+          className={cn(
+            'inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full',
+            modalSize,
+            className
+          )}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          {(title || showCloseButton) && (
+            <div className="bg-gray-50 px-4 py-3 sm:px-6 flex justify-between items-center">
+              {title && (
+                <h3
+                  className="text-lg font-medium text-gray-900"
+                  id="modal-title"
+                >
+                  {title}
+                </h3>
+              )}
+              {showCloseButton && (
+                <button
+                  type="button"
+                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={onClose}
+                  aria-label="Close"
+                >
+                  <span className="sr-only">Close</span>
+                  <svg
+                    className="h-6 w-6"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Body */}
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6">
+            {children}
+          </div>
+
+          {/* Footer */}
+          {footer && (
+            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              {footer}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+/**
+ * Confirmation Modal Component - A specialized modal for confirmations
+ */
+export const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = 'Confirm Action',
+  message = 'Are you sure you want to perform this action?',
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  confirmVariant = 'primary',
+  size = 'sm',
+}) => {
+  // Variant classes for the confirm button
+  const confirmButtonClasses = {
+    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+    danger: 'bg-red-600 hover:bg-red-700 text-white',
+    success: 'bg-green-600 hover:bg-green-700 text-white',
+    warning: 'bg-yellow-600 hover:bg-yellow-700 text-white',
+    secondary: 'bg-gray-600 hover:bg-gray-700 text-white',
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size={size}
+      footer={
+        <>
+          <button
+            type="button"
+            className={cn(
+              'w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium sm:ml-3 sm:w-auto sm:text-sm',
+              confirmButtonClasses[confirmVariant] || confirmButtonClasses.primary
+            )}
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+          >
+            {confirmText}
+          </button>
+          <button
+            type="button"
+            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            onClick={onClose}
+          >
+            {cancelText}
+          </button>
+        </>
+      }
+    >
+      <div className="sm:flex sm:items-start">
+        <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+          <p className="text-sm text-gray-500">{message}</p>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+/**
+ * Modal Provider Component
+ */
+export function ModalProvider({ children }) {
+  const [modals, setModals] = useState([]);
+
+  // Generate a unique ID for each modal
+  const generateId = () => \`modal_\${Date.now()}_\${Math.random().toString(36).substr(2, 9)}\`;
+
+  // Open a modal
+  const openModal = useCallback((modalProps) => {
+    const id = modalProps.id || generateId();
+
+    setModals((currentModals) => [
+      ...currentModals,
+      { id, isOpen: true, ...modalProps }
+    ]);
+
+    return id;
+  }, []);
+
+  // Close a modal by ID
+  const closeModal = useCallback((id) => {
+    setModals((currentModals) =>
+      currentModals.map((modal) =>
+        modal.id === id ? { ...modal, isOpen: false } : modal
+      )
+    );
+
+    // Remove the modal from the array after it's closed
+    setTimeout(() => {
+      setModals((currentModals) =>
+        currentModals.filter((modal) => modal.id !== id)
+      );
+    }, 300); // Animation duration
+  }, []);
+
+  // Context value
+  const contextValue = {
+    openModal,
+    closeModal,
+  };
+
+  return (
+    <ModalContext.Provider value={contextValue}>
+      {children}
+      {modals.map((modal) => (
+        <Modal
+          key={modal.id}
+          {...modal}
+          onClose={() => closeModal(modal.id)}
+        />
+      ))}
+    </ModalContext.Provider>
+  );
+}
+
+/**
+ * Hook to use the modal functionality
+ */
+export function useModal() {
+  const context = useContext(ModalContext);
+
+  if (context === undefined) {
+    throw new Error('useModal must be used within a ModalProvider');
+  }
+
+  return {
+    // Helper method for confirmation modals
+    confirm: (props) => {
+      return new Promise((resolve) => {
+        const id = context.openModal({
+          ...props,
+          onConfirm: () => {
+            if (props.onConfirm) props.onConfirm();
+            resolve(true);
+          },
+          onClose: () => {
+            if (props.onClose) props.onClose();
+            context.closeModal(id);
+            resolve(false);
+          },
+          component: ConfirmationModal,
+        });
+      });
+    },
+
+    // Base methods
+    open: context.openModal,
+    close: context.closeModal,
+  };
+}
+
+export default Modal;

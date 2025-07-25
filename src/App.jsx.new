@@ -1,0 +1,25 @@
+import { useEffect } from 'react';
+import Routes from './routes';
+import { useTheme } from './providers/ThemeProvider';
+
+export default function App() {
+  const { theme } = useTheme();
+
+  // 将主题应用到文档根元素
+  useEffect(() => {
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
+  }, [theme]);
+
+  return (
+    <div className="App">
+      {/* 顶部加载指示器（需要时可实现） */}
+      {/* <div className="fixed top-0 left-0 w-full z-50">
+        <div className="h-1 bg-blue-500 animate-pulse"></div>
+      </div> */}
+
+      {/* 路由 */}
+      <Routes />
+    </div>
+  );
+}

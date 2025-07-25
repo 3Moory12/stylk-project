@@ -37,15 +37,26 @@ metaColorScheme.name = 'color-scheme';
 metaColorScheme.content = 'light dark';
 document.head.appendChild(metaColorScheme);
 
+// Import providers
+import { ToastProvider } from './components/feedback/Toast';
+import { ModalProvider } from './components/feedback/Modal';
+import { ErrorBoundaryProvider } from './providers/ErrorBoundary';
+
 // Render application with providers
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <SimpleSentryProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ThemeProvider>
+      <ToastProvider>
+        <ErrorBoundaryProvider>
+          <ThemeProvider>
+            <ModalProvider>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </ModalProvider>
+          </ThemeProvider>
+        </ErrorBoundaryProvider>
+      </ToastProvider>
     </SimpleSentryProvider>
   </React.StrictMode>
 );
