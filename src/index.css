@@ -1,3 +1,37 @@
-@import 'tailwindcss/preflight';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========== CUSTOM STYLES ========== */
+body {
+  @apply bg-gray-50 text-gray-900;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+.btn-primary {
+  @apply px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200;
+}
+
+.card {
+  @apply bg-white p-6 rounded-xl shadow-md border border-gray-100;
+}
+
+@media (max-width: 640px) {
+  .logo-grid {
+    @apply flex-col items-center;
+  }
+  .logo {
+    @apply w-16 h-16;
+  }
+}
+
+:focus-visible {
+  @apply outline-2 outline-blue-500 outline-offset-2;
+}
