@@ -84,13 +84,21 @@ function sendLog(level, message, meta) {
 
   // Production: Send to monitoring service
   if (level === LogLevel.ERROR) {
-    // Integration with Sentry for error logs
-    import('@sentry/react').then(({ captureMessage, Severity }) => {
-      captureMessage(message, {
-        level: Severity.Error,
-        extra: meta,
-      });
-    });
+    // Only try to use Sentry if it's enabled in the environment
+    if (import.meta.env.VITE_SENTRY_ENABLED === 'true') {
+      try {
+        // Dynamic import to avoid build errors if Sentry isn't available
+        const Sentry = window.Sentry;
+        if (Sentry && Sentry.captureMessage) {
+          Sentry.captureMessage(message, {
+            level: 'error',
+            extra: meta,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to send log to Sentry:', err);
+      }
+    }
   }
 }
 
@@ -132,11 +140,18 @@ export const logger = {
 
     // Report to Web Vitals if relevant
     if (import.meta.env.PROD) {
-      import('web-vitals').then(({ getCLS, getFID, getLCP }) => {
-        getCLS(console.log);
-        getFID(console.log);
-        getLCP(console.log);
-      });
+      // Use a safer approach to avoid build errors
+      try {
+        // Check if web-vitals is already loaded
+        if (window.webVitals) {
+          const { getCLS, getFID, getLCP } = window.webVitals;
+          getCLS(console.log);
+          getFID(console.log);
+          getLCP(console.log);
+        }
+      } catch (err) {
+        console.error('Failed to report web vitals:', err);
+      }
     }
   },
 };
