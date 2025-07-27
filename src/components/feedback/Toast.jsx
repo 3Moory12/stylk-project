@@ -191,7 +191,7 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
   // Generate a unique ID for each toast
-  const generateId = () => \`toast_\${Date.now()}_\${Math.random().toString(36).substr(2, 9)}\`;
+  const generateId = () => `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // Show a toast notification
   const showToast = useCallback((options) => {
